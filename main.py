@@ -72,12 +72,16 @@ while running:
             for checker in checker_group:
                 if checker.rect.collidepoint(mouse.get_pos()[0], mouse.get_pos()[1]):
                     checker.update(mouse.get_pos()[0]//64*64, mouse.get_pos()[1]//64*64)
-                if checker.selected == True and checker.rect.collidepoint(mouse.get_pos()[0], mouse.get_pos()[1]) == False:
-                    checker.selected = False
-                    Checker.selected_checker.selected = False
+
+                if checker.selected and not any(checker.rect.collidepoint(mouse.get_pos()[0], mouse.get_pos()[1]) for checker in checker_group):
+                    checker.selected = False # ^^^ a peice was selected and player clicked on not the same place where this checher was at ^^^
+                    Checker.selected_checker.selected = False # and it doesnt seem to allow peices to collide now!
                     checker.update_image()
-                    checker.rect.x = mouse.get_pos()[0]//64*64
-                    checker.rect.y = mouse.get_pos()[1]//64*64
+
+                    if ((abs(mouse.get_pos()[0]//64*64 - checker.rect.x) == 64 and abs(mouse.get_pos()[1]//64*64 - checker.rect.y) == 64) and # check if X and Y are changed by 1 tile
+                       (checker.rect.x == mouse.get_pos()[0]//64*64 or checker.rect.y == mouse.get_pos()[1]//64*64) == False): # check if it moved horisontaly or verticaly
+                        checker.rect.x = mouse.get_pos()[0]//64*64
+                        checker.rect.y = mouse.get_pos()[1]//64*64
 
     clock.tick()
     display.update()
