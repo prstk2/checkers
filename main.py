@@ -39,6 +39,8 @@ class Checker(sprite.Sprite):
                 self.image = transform.scale(image.load('white.png'), (self.img_scale, self.img_scale))
             else:
                 self.image = transform.scale(image.load('black.png'), (self.img_scale, self.img_scale))
+    def check_move(self, x, y):
+        pass
 
 
 
@@ -63,6 +65,7 @@ for row in range(len(matrix)):
 
 white = 12
 black = 12
+queue = 1
 
 finished = False
 while running:
@@ -83,8 +86,9 @@ while running:
                 running = False
             if e.type == MOUSEBUTTONDOWN: # all game logic is in here btw
                 for checker in checker_group:
-                    if checker.rect.collidepoint(mouse.get_pos()[0], mouse.get_pos()[1]):
-                        checker.update(mouse.get_pos()[0]//64*64, mouse.get_pos()[1]//64*64)
+                    if checker.rect.collidepoint(mouse.get_pos()):
+                        if (queue == 1 and checker.color == 'white') or (queue == -1 and checker.color == 'black'): # who has to play now
+                            checker.update(mouse.get_pos()[0]//64*64, mouse.get_pos()[1]//64*64)
 
                     if checker.selected and not any(checker.rect.collidepoint(mouse.get_pos()[0], mouse.get_pos()[1]) for checker in checker_group):
                         checker.selected = False
@@ -93,10 +97,13 @@ while running:
 
                         dx = mouse.get_pos()[0]//64*64 - checker.rect.x
                         dy = mouse.get_pos()[1]//64*64 - checker.rect.y
-                        if abs(dx) == abs(dy) and dx != 0 and dy != 0:  # Check if movement is diagonal and not horizontal or vertical
-                            if abs(dx) == 64:  # Moved by 1 tile
+                        if (abs(dx) == abs(dy)) and (dx != 0 and dy != 0): # Check if movement is diagonal and not horizontal or vertical
+                            if abs(dx) == 64 and ((checker.color == 'white' and dy < 0) or (checker.color == 'black' and dy > 0)) or checker.isking == 1:  # Moved by 1 tile
                                 checker.rect.x = mouse.get_pos()[0] // 64 * 64
                                 checker.rect.y = mouse.get_pos()[1] // 64 * 64
+                                if (checker.color == 'white' and checker.rect.y == 0) or (checker.color == 'black' and checker.rect.y == 448):
+                                    checker.isking = 1
+                                queue *= -1
                             elif abs(dx) == 128:  # Moved by 2 tiles
                                 enemy_x = checker.rect.x + dx // 2 # Half the way from the destination point
                                 enemy_y = checker.rect.y + dy // 2
@@ -111,6 +118,11 @@ while running:
                                             checker.rect.x = mouse.get_pos()[0] //64*64
                                             checker.rect.y = mouse.get_pos()[1] //64*64
                                         break
+                            elif checker.isking == 1:
+                                checker.rect.x = mouse.get_pos()[0] // 64 * 64
+                                checker.rect.y = mouse.get_pos()[1] // 64 * 64
+                                queue *= -1
+
     else:
         for e in event.get(): 
             if e.type == QUIT:
