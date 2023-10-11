@@ -61,27 +61,59 @@ for row in range(len(matrix)):
             piece = Checker(column*64, row*64, 'black', 'black.png', 64)
             checker_group.add(piece)
 
+white = 12
+black = 12
+
+finished = False
 while running:
-    window.blit(image.load('board.png'), (0, 0))
-    checker_group.draw(window)
 
-    for e in event.get():
-        if e.type == QUIT:
-            running = False
-        if e.type == MOUSEBUTTONDOWN:
-            for checker in checker_group:
-                if checker.rect.collidepoint(mouse.get_pos()[0], mouse.get_pos()[1]):
-                    checker.update(mouse.get_pos()[0]//64*64, mouse.get_pos()[1]//64*64)
+    if finished == False:
+        if black == 0:
+            finished = True
+            print('white won')
+        if white == 0:
+            finished = True
+            print('black won')
 
-                if checker.selected and not any(checker.rect.collidepoint(mouse.get_pos()[0], mouse.get_pos()[1]) for checker in checker_group):
-                    checker.selected = False # ^^^ a peice was selected and player clicked on not the same place where this checher was at ^^^
-                    Checker.selected_checker.selected = False # and it doesnt seem to allow peices to collide now!
-                    checker.update_image()
+        window.blit(image.load('board.png'), (0, 0))
+        checker_group.draw(window)
 
-                    if ((abs(mouse.get_pos()[0]//64*64 - checker.rect.x) == 64 and abs(mouse.get_pos()[1]//64*64 - checker.rect.y) == 64) and # check if X and Y are changed by 1 tile
-                       (checker.rect.x == mouse.get_pos()[0]//64*64 or checker.rect.y == mouse.get_pos()[1]//64*64) == False): # check if it moved horisontaly or verticaly
-                        checker.rect.x = mouse.get_pos()[0]//64*64
-                        checker.rect.y = mouse.get_pos()[1]//64*64
+        for e in event.get(): 
+            if e.type == QUIT:
+                running = False
+            if e.type == MOUSEBUTTONDOWN: # all game logic is in here btw
+                for checker in checker_group:
+                    if checker.rect.collidepoint(mouse.get_pos()[0], mouse.get_pos()[1]):
+                        checker.update(mouse.get_pos()[0]//64*64, mouse.get_pos()[1]//64*64)
 
+                    if checker.selected and not any(checker.rect.collidepoint(mouse.get_pos()[0], mouse.get_pos()[1]) for checker in checker_group):
+                        checker.selected = False
+                        Checker.selected_checker.selected = False
+                        checker.update_image()
+
+                        dx = mouse.get_pos()[0]//64*64 - checker.rect.x
+                        dy = mouse.get_pos()[1]//64*64 - checker.rect.y
+                        if abs(dx) == abs(dy) and dx != 0 and dy != 0:  # Check if movement is diagonal and not horizontal or vertical
+                            if abs(dx) == 64:  # Moved by 1 tile
+                                checker.rect.x = mouse.get_pos()[0] // 64 * 64
+                                checker.rect.y = mouse.get_pos()[1] // 64 * 64
+                            elif abs(dx) == 128:  # Moved by 2 tiles
+                                enemy_x = checker.rect.x + dx // 2 # Half the way from the destination point
+                                enemy_y = checker.rect.y + dy // 2
+                                for enemy_checker in checker_group:
+                                    if enemy_checker.rect.x == enemy_x and enemy_checker.rect.y == enemy_y:
+                                        if enemy_checker.color != checker.color:  # Check if the enemy tile is of a different color than ours
+                                            enemy_checker.kill()  # pow
+                                            if enemy_checker.color == 'black':
+                                                black -= 1
+                                            else: # if white
+                                                white -= 1
+                                            checker.rect.x = mouse.get_pos()[0] //64*64
+                                            checker.rect.y = mouse.get_pos()[1] //64*64
+                                        break
+    else:
+        for e in event.get(): 
+            if e.type == QUIT:
+                running = False # So you can close it after the game ends.
     clock.tick()
     display.update()
